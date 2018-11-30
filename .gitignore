@@ -8,3 +8,5 @@ Testing
 cmake_install.cmake
 compile_commands.json
 trivial_test
+.idea
+/cmake-build-debug
