@@ -23,11 +23,12 @@ static_assert(
 static_assert(sizeof(Mutex) <= 8, "Mutex is too large");
 
 void DummyTest() {
-  int shared_cntr;
+  int shared_cntr = 0;
   int const kNumRounds = 100;
   Mutex mu;
 
   std::vector<std::thread> v;
+  v.reserve(2);
   for (int i = 0; i < 2; ++i) {
     v.emplace_back([&]() {
       for (int i = 0; i < kNumRounds; ++i) {
