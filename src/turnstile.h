@@ -41,7 +41,7 @@ class Turnstile {
 public:
   Turnstile *next = nullptr;
   const int id = turnstile_count++;
-  mutex mutex;
+  mutex turnstile_queue;
   atomic<int> waiting_count;
 
 
@@ -111,7 +111,7 @@ public:
       current->waiting_count++;
     }
     DBG(cout << current_thread << "Trying to acquire lock" << *this << *(this->current) << endl);
-    current->mutex.lock();
+    current->turnstile_queue.lock();
     DBG(cout << current_thread << "entering " << *this << " with " << *(this->current) << endl);
   }
 
@@ -119,13 +119,13 @@ public:
     lock_guard<mutex> lk(turnstile_lock);
     current->waiting_count--;
     if (current->waiting_count == 0) {
-      current->mutex.unlock();
+      current->turnstile_queue.unlock();
       insertToQueue(current);
       DBG(cout << current_thread << "adding " << *current << " from " << *this << "to free list" << endl);
       current = nullptr;
     } else{
       DBG(cout << current_thread << "notify next waiting from " << *this << *current << endl);
-      current->mutex.unlock();
+      current->turnstile_queue.unlock();
     }
   }
 
