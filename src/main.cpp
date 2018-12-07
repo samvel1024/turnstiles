@@ -37,12 +37,12 @@ int main() {
   size_t threads;
   int incremenet_per_thread;
 
-  cout << "Enter number of guarded objects" << endl;
   cin >> objects;
-  cout << "Enter number of threads" << endl;
   cin >> threads;
-  cout << "Enter number of increments per thread" << endl;
   cin >> incremenet_per_thread;
+  cout << "Number of guarded objects " << objects << endl;
+  cout << "Number of threads " << threads << endl;
+  cout << "Number of increments per thread " << incremenet_per_thread << endl;
 
   int expected_sum = static_cast<int>(incremenet_per_thread * threads);
   Counter **counters = new Counter *[objects];

@@ -7,6 +7,13 @@
 #include <iostream>
 
 
+
+#ifdef DEBUG
+#define DBG(x) x
+#else
+#define DBG(x)
+#endif
+
 using namespace std;
 
 
@@ -99,13 +106,13 @@ public:
       lock_guard<mutex> lk(turnstile_lock);
       if (current == nullptr) {
         current = getThreadTurnstile();
-        cout << current_thread << "new " << *current << "on " << *this << endl;
+        DBG(cout << current_thread << "new " << *current << "on " << *this << endl);
       }
       current->waiting_count++;
     }
-    cout << current_thread << "Trying to acquire lock" << *this << *(this->current) << endl;
+    DBG(cout << current_thread << "Trying to acquire lock" << *this << *(this->current) << endl);
     current->mutex.lock();
-    cout << current_thread << "entering " << *this << " with " << *(this->current) << endl;
+    DBG(cout << current_thread << "entering " << *this << " with " << *(this->current) << endl);
   }
 
   void unlock() {
@@ -114,10 +121,10 @@ public:
     if (current->waiting_count == 0) {
       current->mutex.unlock();
       insertToQueue(current);
-      cout << current_thread << "adding " << *current << " from " << *this << "to free list" << endl;
+      DBG(cout << current_thread << "adding " << *current << " from " << *this << "to free list" << endl);
       current = nullptr;
     } else{
-      cout << current_thread << "notify next waiting from " << *this << *current << endl;
+      DBG(cout << current_thread << "notify next waiting from " << *this << *current << endl);
       current->mutex.unlock();
     }
   }
