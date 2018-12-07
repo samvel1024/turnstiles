@@ -23,7 +23,6 @@ class Turnstile;
 
 class Mutex;
 
-thread_local Turnstile *thread_turnstile = nullptr;
 thread_local int thread_id = -1;
 atomic<int> thread_count;
 atomic<int> turnstile_count;
@@ -46,6 +45,24 @@ public:
 
 };
 
+
+struct CurrentThread {
+
+  static void init() {
+    if (thread_id == -1) {
+      thread_id = thread_count++;
+    }
+  }
+
+  friend ostream &operator<<(ostream &os, const CurrentThread &t) {
+    os << "[Thread-" << thread_id << "] === ";
+    return os;
+  }
+};
+
+
+CurrentThread current_thread;
+
 class Mutex {
 private:
   const int id = mutex_count++;
@@ -57,9 +74,7 @@ public:
   Mutex(const Mutex &) = delete;
 
   Turnstile *getThreadTurnstile() {
-    if (thread_id == -1){
-      thread_id = thread_count++;
-    }
+
     lock_guard<mutex> lk(queue_lock);
     if (stack_head == nullptr) {
       return new Turnstile();
@@ -79,23 +94,31 @@ public:
 
 
   void lock() {
-
+    CurrentThread::init();
     {
       lock_guard<mutex> lk(turnstile_lock);
       if (current == nullptr) {
         current = getThreadTurnstile();
+        cout << current_thread << "new " << *current << "on " << *this << endl;
       }
       current->waiting_count++;
     }
+    cout << current_thread << "Trying to acquire lock" << *this << *(this->current) << endl;
     current->mutex.lock();
+    cout << current_thread << "entering " << *this << " with " << *(this->current) << endl;
   }
 
   void unlock() {
     lock_guard<mutex> lk(turnstile_lock);
     current->waiting_count--;
-    if (current->waiting_count == 0){
+    if (current->waiting_count == 0) {
+      current->mutex.unlock();
       insertToQueue(current);
+      cout << current_thread << "adding " << *current << " from " << *this << "to free list" << endl;
       current = nullptr;
+    } else{
+      cout << current_thread << "notify next waiting from " << *this << *current << endl;
+      current->mutex.unlock();
     }
   }
 
