@@ -5,23 +5,11 @@
 #include <mutex>
 #include <string>
 #include <iostream>
+#include "util.h"
 
-
-
-#ifdef DEBUG
-#define DBG(x) x
-#else
-#define DBG(x)
-#endif
 
 using namespace std;
 
-
-void assertion(bool condition, const char *msg) {
-  if (!condition) {
-    throw runtime_error(string("Broken invariant: ") + msg);
-  }
-}
 
 mutex queue_lock;
 mutex turnstile_lock;
@@ -30,8 +18,6 @@ class Turnstile;
 
 class Mutex;
 
-thread_local int thread_id = -1;
-atomic<int> thread_count;
 atomic<int> turnstile_count;
 atomic<int> mutex_count;
 
@@ -53,26 +39,8 @@ public:
 };
 
 
-struct CurrentThread {
-
-  static void init() {
-    if (thread_id == -1) {
-      thread_id = thread_count++;
-    }
-  }
-
-  friend ostream &operator<<(ostream &os, const CurrentThread &t) {
-    os << "[Thread-" << thread_id << "] === ";
-    return os;
-  }
-};
-
-
-CurrentThread current_thread;
-
 class Mutex {
 private:
-  const int id = mutex_count++;
   Turnstile *current = nullptr;
 public:
 
@@ -95,24 +63,23 @@ public:
   void insertToQueue(Turnstile *t) {
     lock_guard<mutex> lk(queue_lock);
     t->next = stack_head;
-    assertion(t->waiting_count == 0, "Busy turnstile is being inserted to free list");
+    util::assertion(t->waiting_count == 0, "Busy turnstile is being inserted to free list");
     stack_head = t;
   }
 
 
   void lock() {
-    CurrentThread::init();
     {
       lock_guard<mutex> lk(turnstile_lock);
       if (current == nullptr) {
         current = getThreadTurnstile();
-        DBG(cout << current_thread << "new " << *current << "on " << *this << endl);
+        LOG(cout << "new " << *current << "on " << *this);
       }
       current->waiting_count++;
     }
-    DBG(cout << current_thread << "Trying to acquire lock" << *this << *(this->current) << endl);
+    LOG(cout << "Trying to acquire lock" << *this << *(this->current));
     current->turnstile_queue.lock();
-    DBG(cout << current_thread << "entering " << *this << " with " << *(this->current) << endl);
+    LOG(cout << "entering " << *this << " with " << *(this->current));
   }
 
   void unlock() {
@@ -121,16 +88,16 @@ public:
     if (current->waiting_count == 0) {
       current->turnstile_queue.unlock();
       insertToQueue(current);
-      DBG(cout << current_thread << "adding " << *current << " from " << *this << "to free list" << endl);
+      LOG(cout << "adding " << *current << " from " << *this << "to free list");
       current = nullptr;
-    } else{
-      DBG(cout << current_thread << "notify next waiting from " << *this << *current << endl);
+    } else {
+      LOG(cout << "notify next waiting from " << *this << *current);
       current->turnstile_queue.unlock();
     }
   }
 
   friend ostream &operator<<(ostream &os, const Mutex &t) {
-    os << "Mutex (" << t.id << ") ";
+    os << "Mutex (" << ") ";
     return os;
   }
 

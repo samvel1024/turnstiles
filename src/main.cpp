@@ -22,8 +22,10 @@ public:
 };
 
 #ifdef WITH_STD_MUTEX
+bool std_mutex = true;
 using Counter = MutexCounter<std::mutex>;
 #else
+bool std_mutex = false;
 using Counter = MutexCounter<Mutex>;
 #endif
 
@@ -36,6 +38,8 @@ int main() {
   size_t objects;
   size_t threads;
   int incremenet_per_thread;
+
+  cout << "Using std mutex: " << std_mutex << endl;
 
   cin >> objects;
   cin >> threads;
