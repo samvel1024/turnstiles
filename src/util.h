@@ -10,6 +10,12 @@ namespace util {
   thread_local int thread_id = -1;
   std::atomic<int> thread_count;
 
+#ifdef DEBUG
+  constexpr bool is_debug = true;
+#else
+  constexpr bool is_debug = false;
+#endif
+
   struct CurrentThread {
     static void init() {
       if (thread_id == -1) {
@@ -26,6 +32,8 @@ namespace util {
   CurrentThread current_thread;
 
   std::mutex io_lock;
+  std::atomic<int> mutex_count;
+
 
   void assertion(bool condition, const char *msg) {
     if (!condition) {
@@ -33,12 +41,32 @@ namespace util {
     }
   }
 
+  template<typename T>
+  struct node {
+    T data;
+    node *next;
+
+    node(const T &data) : data(data), next(nullptr) {}
+  };
+
+  template<typename T>
+  class stack {
+    std::atomic<node<T> *> head;
+  public:
+    void push(const T &data) {
+      node<T> *new_node = new node<T>(data);
+      new_node->next = head.load();
+      while (!head.compare_exchange_weak(new_node->next, new_node));
+    }
+
+    node<T> *get_head() { return head; }
+  };
 
 }
 
 #ifdef DEBUG
-#define LOG(x) {\
-util::CurrentThread::init(); \
+#define LOG(x) util::CurrentThread::init(); \
+{\
 std::unique_lock<std::mutex> lk(util::io_lock);\
 cout << util::current_thread;\
 x << endl;\
@@ -47,4 +75,4 @@ x << endl;\
 #define LOG(x)
 #endif
 
-#endif //TURNSTILES_UTIL_H
+#endif 

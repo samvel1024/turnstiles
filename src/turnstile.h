@@ -5,7 +5,10 @@
 #include <mutex>
 #include <string>
 #include <iostream>
+#include <vector>
+#include <array>
 #include "util.h"
+#include "unordered_map"
 
 
 using namespace std;
@@ -13,22 +16,33 @@ using namespace std;
 
 mutex queue_lock;
 mutex turnstile_lock;
-
 class Turnstile;
 
 class Mutex;
 
 atomic<int> turnstile_count;
-atomic<int> mutex_count;
+std::array<std::mutex, 255> turnstile_locks;
 
 Turnstile *stack_head;
+
+
+
+size_t map_ptr(void *ptr){
+  long ptr_val = reinterpret_cast<long>(ptr);
+  size_t h1 = std::hash<long>{}(ptr_val);
+  size_t ans = h1 % 256;
+  util::assertion(ans < 256 , "Hashed index not in range");
+  return ans;
+}
+
+
 
 class Turnstile {
 public:
   Turnstile *next = nullptr;
   const int id = turnstile_count++;
   mutex turnstile_queue;
-  atomic<int> waiting_count;
+  atomic<int> waiting_count{};
 
 
   friend ostream &operator<<(ostream &os, const Turnstile &t) {
@@ -38,9 +52,15 @@ public:
 
 };
 
+thread_local Turnstile *thread_turnstile;
+
+
 
 class Mutex {
 private:
+#ifdef DEBUG
+  int id = util::mutex_count++;
+#endif
   Turnstile *current = nullptr;
 public:
 
@@ -49,15 +69,10 @@ public:
   Mutex(const Mutex &) = delete;
 
   Turnstile *getThreadTurnstile() {
-
-    lock_guard<mutex> lk(queue_lock);
-    if (stack_head == nullptr) {
-      return new Turnstile();
+    if (thread_turnstile == nullptr) {
+      thread_turnstile =new  Turnstile();
     }
-    Turnstile *ans = stack_head;
-    stack_head = stack_head->next;
-    ans->next = nullptr;
-    return ans;
+    return thread_turnstile;
   }
 
   void insertToQueue(Turnstile *t) {
@@ -70,7 +85,7 @@ public:
 
   void lock() {
     {
-      lock_guard<mutex> lk(turnstile_lock);
+      lock_guard<mutex> lk(turnstile_locks[map_ptr(this)]);
       if (current == nullptr) {
         current = getThreadTurnstile();
         LOG(cout << "new " << *current << "on " << *this);
@@ -83,11 +98,10 @@ public:
   }
 
   void unlock() {
-    lock_guard<mutex> lk(turnstile_lock);
+    lock_guard<mutex> lk(turnstile_locks[map_ptr(this)]);
     current->waiting_count--;
     if (current->waiting_count == 0) {
       current->turnstile_queue.unlock();
-      insertToQueue(current);
       LOG(cout << "adding " << *current << " from " << *this << "to free list");
       current = nullptr;
     } else {
@@ -96,10 +110,14 @@ public:
     }
   }
 
+#ifdef DEBUG
+
   friend ostream &operator<<(ostream &os, const Mutex &t) {
-    os << "Mutex (" << ") ";
+    os << "Mutex (" << t.id << ") ";
     return os;
   }
+
+#endif
 
 };
 
