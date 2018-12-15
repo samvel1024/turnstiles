@@ -47,8 +47,10 @@ std::unique_lock<std::mutex> __lk(util::Logger::io_lock);\
 std::cout << util::Logger::instance;\
 x << std::endl;\
 }
+#define ASSERT(x, y) util::assertion(x, y);
 #else
 #define LOG(x)
+#define ASSERT(x, y)
 #endif
 
 #endif 
