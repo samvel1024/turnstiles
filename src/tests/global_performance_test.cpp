@@ -1,17 +1,16 @@
 #include <cassert>
 #include <iostream>
-#include <shared_mutex>
 #include <thread>
 #include <vector>
 #include "turnstile.h"
 
-template <typename M>
+template<typename M>
 class CriticalSection {
  public:
   explicit CriticalSection(int64_t cost) : cost(cost) {}
 
-  CriticalSection(const CriticalSection& other) noexcept
-      : counter(other.counter), cost(other.cost) {}
+  CriticalSection(const CriticalSection &other) noexcept
+    : counter(other.counter), cost(other.cost) {}
 
   void add(unsigned x) {
     std::unique_lock<M> lock{mutex};
@@ -27,18 +26,16 @@ class CriticalSection {
   M mutex{};
 };
 
-std::shared_mutex blockade;
 
-template <typename M>
-void addToSection(CriticalSection<M>& criticalSection,
+template<typename M>
+void addToSection(CriticalSection<M> &criticalSection,
                   size_t repeatsPerThread) {
-  std::shared_lock<std::shared_mutex> lock{blockade};
   for (size_t i = 0; i < repeatsPerThread; ++i) {
     criticalSection.add(1);
   }
 }
 
-template <typename M>
+template<typename M>
 void test(size_t criticalSections, size_t threadsPerSection,
           size_t repeatsPerThread, int64_t cost) {
   std::cout << "Beginning test with " << criticalSections << " sections, "
@@ -53,9 +50,7 @@ void test(size_t criticalSections, size_t threadsPerSection,
     sections.emplace_back(cost);
   }
 
-  std::unique_lock<std::shared_mutex> lock{blockade};
-
-  for (auto& section : sections) {
+  for (auto &section : sections) {
     for (size_t j = 0; j < threadsPerSection; ++j) {
       threads.emplace_back([&section, repeatsPerThread] {
         addToSection<M>(section, repeatsPerThread);
@@ -63,14 +58,12 @@ void test(size_t criticalSections, size_t threadsPerSection,
     }
   }
 
-  std::cout << "Blockade down." << std::endl;
-  lock.unlock();
-
-  for (auto& thread : threads) {
+  for (auto &thread : threads) {
     thread.join();
   }
 
-  for (auto& section : sections) {
+  for (auto &section : sections) {
+    section.getCounter();
     assert(section.getCounter() == threadsPerSection * repeatsPerThread);
   }
 }
