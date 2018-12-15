@@ -18,8 +18,8 @@ static_assert(std::is_default_constructible<Mutex>::value,
 static_assert(std::is_same<void, decltype(std::declval<Mutex>().lock())>::value,
               "Mutex should have a \"void lock()\" member function.");
 static_assert(
-  std::is_same<void, decltype(std::declval<Mutex>().unlock())>::value,
-  "Mutex should have a \"void unlock()\" member function.");
+    std::is_same<void, decltype(std::declval<Mutex>().unlock())>::value,
+    "Mutex should have a \"void unlock()\" member function.");
 static_assert(sizeof(Mutex) <= 8, "Mutex is too large");
 
 void DummyTest() {
@@ -43,7 +43,7 @@ void DummyTest() {
   }
 
   if (shared_cntr != kNumRounds * 2) {
-    throw std::logic_error("Counter==" + std::to_string(shared_cntr) +
+    throw std::logic_error("Cfounter==" + std::to_string(shared_cntr) +
                            " expected==" + std::to_string(kNumRounds * 2));
   }
 }

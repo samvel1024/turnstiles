@@ -1,10 +1,10 @@
 #include "turnstile.h"
 
 #include <thread>
-using namespace std;
+
 template <typename M>
 class MutexCounter {
-public:
+ public:
   volatile int count = 0;
   M m;
 
@@ -13,7 +13,7 @@ public:
   MutexCounter(const MutexCounter &p) = default;
 
   void increment() {
-    lock_guard<M> lk(m);
+    std::lock_guard<M> lk(m);
     int c = count;
     c = c + 1;
     count = c;
@@ -29,24 +29,25 @@ using Counter = MutexCounter<Mutex>;
 #endif
 
 int main() {
-  srand((int)time(0));
+  srand(static_cast<unsigned int>(time(0)));
 
   size_t objects;
   size_t threads;
   int incremenet_per_thread;
 
-  cout << "Using std mutex: " << std_mutex << endl;
+  std::cout << "Using std mutex: " << std_mutex << std::endl;
 
-  cin >> objects;
-  cin >> threads;
-  cin >> incremenet_per_thread;
-  cout << "Number of guarded objects " << objects << endl;
-  cout << "Number of threads " << threads << endl;
-  cout << "Number of increments per thread " << incremenet_per_thread << endl;
+  std::cin >> objects;
+  std::cin >> threads;
+  std::cin >> incremenet_per_thread;
+  std::cout << "Number of guarded objects " << objects << std::endl;
+  std::cout << "Number of threads " << threads << std::endl;
+  std::cout << "Number of increments per thread " << incremenet_per_thread
+            << std::endl;
 
   int expected_sum = static_cast<int>(incremenet_per_thread * threads);
   Counter **counters = new Counter *[objects];
-  vector<thread> thread_list;
+  std::vector<std::thread> thread_list;
 
   // Initialize locked objects
   for (int i = 0; i < objects; ++i) {
@@ -64,13 +65,14 @@ int main() {
 
   for (auto &t : thread_list) t.join();
 
-  long sum = 0;
+  int64_t sum = 0;
   for (int i = 0; i < objects; ++i) {
     sum += counters[i]->count;
   }
 
   if (expected_sum != sum) {
-    cerr << "ERROR: expected: " << expected_sum << " actual:" << sum << endl;
+    std::cerr << "ERROR: expected: " << expected_sum << " actual:" << sum
+              << std::endl;
     return 1;
   }
   return 0;

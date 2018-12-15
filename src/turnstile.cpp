@@ -1,8 +1,6 @@
 #include "turnstile.h"
 #include "util.h"
 
-using namespace std;
-
 //********************************************************************
 //******************* Turnstile implementation ***********************
 //********************************************************************
@@ -46,7 +44,7 @@ bool Turnstile::unlock() {
   }
 }
 
-ostream &operator<<(ostream &os, const Turnstile &t) {
+std::ostream &operator<<(std::ostream &os, const Turnstile &t) {
   os << "Turnstile (" << &t << ") ";
   return os;
 }
@@ -58,9 +56,9 @@ ostream &operator<<(ostream &os, const Turnstile &t) {
 std::array<std::mutex, Mutex::LOCK_COUNT> Mutex::turnstile_locks = {};
 
 size_t Mutex::map_ptr(void *ptr) {
-  long ptr_val = reinterpret_cast<long>(ptr);
+  int64_t ptr_val = reinterpret_cast<int64_t>(ptr);
   LOG(cout << "PTR:" << ptr_val);
-  size_t h1 = std::hash<long>{}(ptr_val);
+  size_t h1 = std::hash<int64_t>{}(ptr_val);
   size_t ans = h1 % LOCK_COUNT;
   ASSERT(ans < LOCK_COUNT, "Hashed index not in range");
   LOG(cout << "HASH:" << ans);
@@ -69,7 +67,7 @@ size_t Mutex::map_ptr(void *ptr) {
 
 void Mutex::lock() {
   {
-    lock_guard<mutex> lk(Mutex::turnstile_locks[map_ptr(this)]);
+    std::lock_guard<std::mutex> lk(Mutex::turnstile_locks[map_ptr(this)]);
     if (current == nullptr) {
       this->current = Turnstile::provide_turnstile();
       LOG(cout << "new " << *current << "on " << *this);
@@ -82,14 +80,14 @@ void Mutex::lock() {
 }
 
 void Mutex::unlock() {
-  lock_guard<mutex> lk(Mutex::turnstile_locks[map_ptr(this)]);
+  std::lock_guard<std::mutex> lk(Mutex::turnstile_locks[map_ptr(this)]);
   ASSERT(this->current != nullptr, "Mutex turnstile cannot be null on unlock")
   if (this->current->unlock()) {
     this->current = nullptr;
   }
 }
 
-ostream &operator<<(ostream &os, const Mutex &t) {
+std::ostream &operator<<(std::ostream &os, const Mutex &t) {
   os << "Mutex (" << &t << ") ";
   return os;
 }

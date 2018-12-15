@@ -1,12 +1,12 @@
-#include "turnstile.h"
+#include <cassert>
 #include <condition_variable>
 #include <experimental/vector>
-#include <cassert>
 #include <thread>
+#include "turnstile.h"
 
 template <typename T, typename M>
 class Buffer {
-private:
+ private:
   static const size_t SIZE{20};
 
   std::array<T, SIZE> buffer{};
@@ -17,7 +17,7 @@ private:
   std::condition_variable_any producers{};
   std::condition_variable_any consumers{};
 
-public:
+ public:
   void insert(T t) {
     std::unique_lock<M> lock{mutex};
 
@@ -77,7 +77,7 @@ void test(size_t producers, size_t consumers, size_t count) {
 
   for (size_t i = 0; i < producers; ++i) {
     threads.emplace_back(
-      [&buffer, count] { produceToBuffer<T>(buffer, count); });
+        [&buffer, count] { produceToBuffer<T>(buffer, count); });
   }
   for (size_t i = 0; i < consumers; ++i) {
     threads.emplace_back([&buffer, consumerLoad, &sum] {
@@ -105,10 +105,10 @@ int main() {
   std::cout << "Performance comparison..." << std::endl;
 
   auto startMutex = std::chrono::high_resolution_clock::now();
-  test<unsigned long long, Mutex>(20, 30, 90000);
+  test<int64_t, Mutex>(20, 30, 90000);
   auto stopMutex = std::chrono::high_resolution_clock::now();
   auto startStd = std::chrono::high_resolution_clock::now();
-  test<unsigned long long, std::mutex>(20, 30, 90000);
+  test<int64_t, std::mutex>(20, 30, 90000);
   auto stopStd = std::chrono::high_resolution_clock::now();
 
   std::cout << "std::mutex time: " << (stopStd - startStd).count() * 0.000000001

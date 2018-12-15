@@ -1,16 +1,16 @@
 #ifndef SRC_TURNSTILE_H_
 #define SRC_TURNSTILE_H_
 
+#include <array>
 #include <atomic>
+#include <iostream>
 #include <mutex>
 #include <string>
-#include <iostream>
-#include <vector>
-#include <array>
 #include <unordered_map>
+#include <vector>
 
 class Turnstile {
-private:
+ private:
   static std::mutex queue_guard;
   static Turnstile *queue;
 
@@ -22,7 +22,7 @@ private:
 
   static void add_to_queue(Turnstile *t);
 
-public:
+ public:
   Turnstile() = default;
 
   void lock();
@@ -37,7 +37,7 @@ public:
 };
 
 class Mutex {
-private:
+ private:
   static constexpr int LOCK_COUNT = 256;
 
   Turnstile *current = nullptr;
@@ -46,7 +46,7 @@ private:
 
   size_t map_ptr(void *ptr);
 
-public:
+ public:
   Mutex() = default;
 
   Mutex(const Mutex &) = delete;
