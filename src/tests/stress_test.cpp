@@ -50,12 +50,12 @@ int main() {
   std::vector<std::thread> thread_list;
 
   // Initialize locked objects
-  for (int i = 0; i < objects; ++i) {
+  for (unsigned i = 0; i < objects; ++i) {
     counters[i] = new Counter();
   }
 
   thread_list.reserve(threads);
-  for (int i = 0; i < threads; ++i) {
+  for (unsigned i = 0; i < threads; ++i) {
     thread_list.emplace_back([&]() {
       for (int j = 0; j < incremenet_per_thread; ++j) {
         counters[rand() % objects]->increment();
@@ -66,7 +66,7 @@ int main() {
   for (auto &t : thread_list) t.join();
 
   int64_t sum = 0;
-  for (int i = 0; i < objects; ++i) {
+  for (unsigned i = 0; i < objects; ++i) {
     sum += counters[i]->count;
   }
 
