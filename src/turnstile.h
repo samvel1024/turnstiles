@@ -9,23 +9,20 @@
 #include <array>
 #include <unordered_map>
 
-
 class Turnstile {
 private:
-
   static std::mutex queue_guard;
   static Turnstile *queue;
 
   Turnstile *next = nullptr;
 
-  std::atomic<int> waiting_count;
+  std::atomic<int> waiting_count{};
 
   std::mutex turnstile_mutex;
 
   static void add_to_queue(Turnstile *t);
 
 public:
-
   Turnstile() = default;
 
   void lock();
@@ -37,13 +34,10 @@ public:
   static Turnstile *provide_turnstile();
 
   friend std::ostream &operator<<(std::ostream &os, const Turnstile &t);
-
 };
-
 
 class Mutex {
 private:
-
   static constexpr int LOCK_COUNT = 256;
 
   Turnstile *current = nullptr;
@@ -53,7 +47,6 @@ private:
   size_t map_ptr(void *ptr);
 
 public:
-
   Mutex() = default;
 
   Mutex(const Mutex &) = delete;
@@ -63,7 +56,6 @@ public:
   void unlock();
 
   friend std::ostream &operator<<(std::ostream &os, const Mutex &t);
-
 };
 
 #endif  // SRC_TURNSTILE_H_

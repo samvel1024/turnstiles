@@ -18,8 +18,8 @@ static_assert(std::is_default_constructible<Mutex>::value,
 static_assert(std::is_same<void, decltype(std::declval<Mutex>().lock())>::value,
               "Mutex should have a \"void lock()\" member function.");
 static_assert(
-    std::is_same<void, decltype(std::declval<Mutex>().unlock())>::value,
-    "Mutex should have a \"void unlock()\" member function.");
+  std::is_same<void, decltype(std::declval<Mutex>().unlock())>::value,
+  "Mutex should have a \"void unlock()\" member function.");
 static_assert(sizeof(Mutex) <= 8, "Mutex is too large");
 
 void DummyTest() {

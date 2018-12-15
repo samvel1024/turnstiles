@@ -31,21 +31,26 @@ namespace util {
   std::atomic<int> Logger::thread_count;
   std::mutex Logger::io_lock;
 
-
   void assertion(bool condition, const char *msg) {
     if (!condition) {
       throw std::runtime_error(std::string("Broken invariant: ") + msg);
     }
   }
-
 }
 
 #ifdef DEBUG
-#define LOG(x) util::Logger::init(); \
-{\
-std::unique_lock<std::mutex> __lk(util::Logger::io_lock);\
-std::cout << util::Logger::instance;\
-x << std::endl;\
+#define LOG(x)                                            \
+  util::Logger::init();                                   \
+  \
+{                                                    \
+    \
+std::unique_lock<std::mutex> __lk(util::Logger::io_lock); \
+    \
+std::cout                                                 \
+        << util::Logger::instance;                        \
+    \
+x << std::endl;                                           \
+  \
 }
 #define ASSERT(x, y) util::assertion(x, y);
 #else
@@ -53,4 +58,4 @@ x << std::endl;\
 #define ASSERT(x, y)
 #endif
 
-#endif 
+#endif

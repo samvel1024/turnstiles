@@ -2,7 +2,7 @@
 
 #include <thread>
 using namespace std;
-template<typename M>
+template <typename M>
 class MutexCounter {
 public:
   volatile int count = 0;
@@ -28,10 +28,8 @@ bool std_mutex = false;
 using Counter = MutexCounter<Mutex>;
 #endif
 
-
 int main() {
-
-  srand((int) time(0));
+  srand((int)time(0));
 
   size_t objects;
   size_t threads;
@@ -50,11 +48,10 @@ int main() {
   Counter **counters = new Counter *[objects];
   vector<thread> thread_list;
 
-  //Initialize locked objects
+  // Initialize locked objects
   for (int i = 0; i < objects; ++i) {
     counters[i] = new Counter();
   }
-
 
   thread_list.reserve(threads);
   for (int i = 0; i < threads; ++i) {
@@ -65,20 +62,16 @@ int main() {
     });
   }
 
-
-  for (auto &t:thread_list)
-    t.join();
+  for (auto &t : thread_list) t.join();
 
   long sum = 0;
   for (int i = 0; i < objects; ++i) {
     sum += counters[i]->count;
   }
 
-
   if (expected_sum != sum) {
     cerr << "ERROR: expected: " << expected_sum << " actual:" << sum << endl;
     return 1;
   }
   return 0;
-
 }

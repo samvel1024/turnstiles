@@ -11,7 +11,7 @@ Mutex m1, m2, m3, m4, m5, m6, m7, m8;
 int result = 0;
 
 void path1() {
-    for(int i = 0; i < REPEATS; ++i) {
+    for (int i = 0; i < REPEATS; ++i) {
         m1.lock();
         m2.lock();
         m4.lock();
@@ -31,7 +31,7 @@ void path1() {
 }
 
 void path2() {
-    for(int i = 0; i < REPEATS; ++i) {
+    for (int i = 0; i < REPEATS; ++i) {
         m3.lock();
         m2.lock();
         m4.lock();
@@ -56,12 +56,12 @@ int main() {
     std::vector<std::thread> threads;
     threads.reserve(THREADS_PER_PATH * 2);
 
-    for(size_t i = 0; i < THREADS_PER_PATH; ++i) {
+    for (size_t i = 0; i < THREADS_PER_PATH; ++i) {
         threads.emplace_back(path1);
         threads.emplace_back(path2);
     }
 
-    for(auto& thread : threads) {
+    for (auto& thread : threads) {
         thread.join();
     }
 
