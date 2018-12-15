@@ -32,6 +32,8 @@ public:
 
   bool unlock();
 
+  void add_waiting();
+
   static Turnstile *provide_turnstile();
 
   friend std::ostream &operator<<(std::ostream &os, const Turnstile &t);
