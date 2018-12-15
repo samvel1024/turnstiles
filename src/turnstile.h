@@ -14,17 +14,23 @@ using namespace std;
 class Turnstile {
 private:
 
+  static std::mutex queue_guard;
+  static Turnstile *queue;
   static thread_local Turnstile *thread_turnstile;
 
 public:
 
   mutex turnstile_mutex;
 
+  Turnstile *next = nullptr;
+
   atomic<int> waiting_count{};
 
   Turnstile() = default;
 
-  static Turnstile *for_thread();
+  static Turnstile *pop_turnstile();
+
+  static void add_to_queue(Turnstile *t);
 
   friend ostream &operator<<(ostream &os, const Turnstile &t);
 
@@ -34,7 +40,7 @@ public:
 class Mutex {
 private:
 
-  static constexpr int LOCK_COUNT = 1;
+  static constexpr int LOCK_COUNT = 256;
 
   Turnstile *current = nullptr;
 
