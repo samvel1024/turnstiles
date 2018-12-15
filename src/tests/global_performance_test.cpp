@@ -75,10 +75,10 @@ void test(size_t criticalSections, size_t threadsPerSection, size_t repeatsPerTh
 
 int main() {
     auto startStd = std::chrono::high_resolution_clock::now();
-    test<std::mutex>(1000, 4, 1000, 2);
+    test<std::mutex>(200, 4, 1000, 2);
     auto stopStd = std::chrono::high_resolution_clock::now();
     auto startMutex = std::chrono::high_resolution_clock::now();
-    test<Mutex>(1000, 4, 1000, 2);
+    test<Mutex>(200, 4, 1000, 2);
     auto stopMutex = std::chrono::high_resolution_clock::now();
 
     std::cout << "std::mutex time: " << (stopStd - startStd).count() * 0.000000001 << " s" << std::endl;
