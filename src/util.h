@@ -7,32 +7,29 @@
 
 namespace util {
 
-  thread_local int thread_id = -1;
-  std::atomic<int> thread_count;
+  class Logger {
+  public:
+    static Logger instance;
+    static thread_local int thread_id;
+    static std::atomic<int> thread_count;
+    static std::mutex io_lock;
 
-#ifdef DEBUG
-  constexpr bool is_debug = true;
-#else
-  constexpr bool is_debug = false;
-#endif
-
-  struct CurrentThread {
     static void init() {
-      if (thread_id == -1) {
-        thread_id = thread_count++;
+      if (thread_id == 0) {
+        thread_id = ++thread_count;
       }
     }
 
-    friend std::ostream &operator<<(std::ostream &os, const CurrentThread &t) {
+    friend std::ostream &operator<<(std::ostream &os, const Logger &t) {
       os << "[Thread-" << thread_id << "] - ";
       return os;
     }
   };
 
-  CurrentThread current_thread;
-
-  std::mutex io_lock;
-  std::atomic<int> mutex_count;
+  Logger Logger::instance;
+  thread_local int Logger::thread_id;
+  std::atomic<int> Logger::thread_count;
+  std::mutex Logger::io_lock;
 
 
   void assertion(bool condition, const char *msg) {
@@ -41,35 +38,14 @@ namespace util {
     }
   }
 
-  template<typename T>
-  struct node {
-    T data;
-    node *next;
-
-    node(const T &data) : data(data), next(nullptr) {}
-  };
-
-  template<typename T>
-  class stack {
-    std::atomic<node<T> *> head;
-  public:
-    void push(const T &data) {
-      node<T> *new_node = new node<T>(data);
-      new_node->next = head.load();
-      while (!head.compare_exchange_weak(new_node->next, new_node));
-    }
-
-    node<T> *get_head() { return head; }
-  };
-
 }
 
 #ifdef DEBUG
-#define LOG(x) util::CurrentThread::init(); \
+#define LOG(x) util::Logger::init(); \
 {\
-std::unique_lock<std::mutex> lk(util::io_lock);\
-cout << util::current_thread;\
-x << endl;\
+std::unique_lock<std::mutex> __lk(util::Logger::io_lock);\
+std::cout << util::Logger::instance;\
+x << std::endl;\
 }
 #else
 #define LOG(x)
