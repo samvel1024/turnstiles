@@ -1,12 +1,12 @@
-#include "turnstile.h"
-#include <condition_variable>
-#include <experimental/vector>
 #include <cassert>
+#include <condition_variable>
+#include <vector>
 #include <thread>
+#include "turnstile.h"
 
-template<typename T, typename M>
+template <typename T, typename M>
 class Buffer {
-private:
+ private:
   static const size_t SIZE{20};
 
   std::array<T, SIZE> buffer{};
@@ -17,7 +17,7 @@ private:
   std::condition_variable_any producers{};
   std::condition_variable_any consumers{};
 
-public:
+ public:
   void insert(T t) {
     std::unique_lock<M> lock{mutex};
 
@@ -43,15 +43,16 @@ public:
   }
 };
 
-template<typename T, typename M>
+template <typename T, typename M>
 void produceToBuffer(Buffer<T, M> &buffer, size_t count) {
   for (size_t i = 1; i <= count; ++i) {
     buffer.insert(i);
   }
 }
 
-template<typename T, typename M>
-void sumFromBuffer(Buffer<T, M> &buffer, size_t count, std::atomic<T> &cumulativeSum) {
+template <typename T, typename M>
+void sumFromBuffer(Buffer<T, M> &buffer, size_t count,
+                   std::atomic<T> &cumulativeSum) {
   T sum = 0;
 
   for (size_t i = 1; i <= count; ++i) {
@@ -60,10 +61,11 @@ void sumFromBuffer(Buffer<T, M> &buffer, size_t count, std::atomic<T> &cumulativ
   cumulativeSum += sum;
 }
 
-template<typename T, typename M>
+template <typename T, typename M>
 void test(size_t producers, size_t consumers, size_t count) {
-  std::cout << "Beginning test with " << producers << " producers, " << consumers << " consumers and a total of "
-            << count * producers << " portions" << std::endl;
+  std::cout << "Beginning test with " << producers << " producers, "
+            << consumers << " consumers and a total of " << count * producers
+            << " portions" << std::endl;
 
   Buffer<T, M> buffer;
   std::vector<std::thread> threads;
@@ -74,10 +76,13 @@ void test(size_t producers, size_t consumers, size_t count) {
   std::atomic<T> sum(0);
 
   for (size_t i = 0; i < producers; ++i) {
-    threads.emplace_back([&buffer, count] { produceToBuffer<T>(buffer, count); });
+    threads.emplace_back(
+        [&buffer, count] { produceToBuffer<T>(buffer, count); });
   }
   for (size_t i = 0; i < consumers; ++i) {
-    threads.emplace_back([&buffer, consumerLoad, &sum] { sumFromBuffer<T>(buffer, consumerLoad, sum); });
+    threads.emplace_back([&buffer, consumerLoad, &sum] {
+      sumFromBuffer<T>(buffer, consumerLoad, sum);
+    });
   }
 
   for (auto &thread : threads) {
@@ -100,14 +105,17 @@ int main() {
   std::cout << "Performance comparison..." << std::endl;
 
   auto startMutex = std::chrono::high_resolution_clock::now();
-  test<unsigned long long, Mutex>(20, 30, 90000);
+  test<int64_t, Mutex>(20, 30, 90000);
   auto stopMutex = std::chrono::high_resolution_clock::now();
   auto startStd = std::chrono::high_resolution_clock::now();
-  test<unsigned long long, std::mutex>(20, 30, 90000);
+  test<int64_t, std::mutex>(20, 30, 90000);
   auto stopStd = std::chrono::high_resolution_clock::now();
 
-  std::cout << "std::mutex time: " << (stopStd - startStd).count() * 0.000000001 << " s" << std::endl;
-  std::cout << "Mutex time:      " << (stopMutex - startMutex).count() * 0.000000001 << " s" << std::endl;
+  std::cout << "std::mutex time: " << (stopStd - startStd).count() * 0.000000001
+            << " s" << std::endl;
+  std::cout << "Mutex time:      "
+            << (stopMutex - startMutex).count() * 0.000000001 << " s"
+            << std::endl;
 
   return 0;
 }

@@ -1,55 +1,52 @@
 #ifndef SRC_TURNSTILE_H_
 #define SRC_TURNSTILE_H_
 
+#include <array>
 #include <atomic>
+#include <iostream>
 #include <mutex>
 #include <string>
-#include <iostream>
-#include <vector>
-#include <array>
 #include <unordered_map>
-
-using namespace std;
+#include <vector>
 
 class Turnstile {
-private:
-
-  static std::mutex queue_guard;
-  static Turnstile *queue;
-  static thread_local Turnstile *thread_turnstile;
-
-public:
-
-  mutex turnstile_mutex;
+ private:
+  static std::mutex list_guard;
+  static Turnstile *free_list;
 
   Turnstile *next = nullptr;
 
-  atomic<int> waiting_count{};
+  std::atomic<int> waiting_count{};
 
+  std::mutex turnstile_mutex;
+
+  static void add_to_list(Turnstile *t);
+
+ public:
   Turnstile() = default;
 
-  static Turnstile *pop_turnstile();
+  void lock();
 
-  static void add_to_queue(Turnstile *t);
+  bool unlock();
 
-  friend ostream &operator<<(ostream &os, const Turnstile &t);
+  void add_waiting();
 
+  static Turnstile *provide_turnstile();
+
+  friend std::ostream &operator<<(std::ostream &os, const Turnstile &t);
 };
 
-
 class Mutex {
-private:
-
+ private:
   static constexpr int LOCK_COUNT = 256;
 
   Turnstile *current = nullptr;
 
-  static std::array<std::mutex, LOCK_COUNT> turnstile_locks;
+  static std::array<std::mutex, LOCK_COUNT> turnstile_guards;
 
   size_t map_ptr(void *ptr);
 
-public:
-
+ public:
   Mutex() = default;
 
   Mutex(const Mutex &) = delete;
@@ -58,8 +55,7 @@ public:
 
   void unlock();
 
-  friend ostream &operator<<(ostream &os, const Mutex &t);
-
+  friend std::ostream &operator<<(std::ostream &os, const Mutex &t);
 };
 
 #endif  // SRC_TURNSTILE_H_
