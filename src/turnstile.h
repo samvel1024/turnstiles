@@ -11,8 +11,8 @@
 
 class Turnstile {
  private:
-  static std::mutex queue_guard;
-  static Turnstile *queue;
+  static std::mutex list_guard;
+  static Turnstile *free_list;
 
   Turnstile *next = nullptr;
 
@@ -20,7 +20,7 @@ class Turnstile {
 
   std::mutex turnstile_mutex;
 
-  static void add_to_queue(Turnstile *t);
+  static void add_to_list(Turnstile *t);
 
  public:
   Turnstile() = default;

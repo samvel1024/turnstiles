@@ -5,25 +5,25 @@
 //******************* Turnstile implementation ***********************
 //********************************************************************
 
-Turnstile *Turnstile::queue;
-std::mutex Turnstile::queue_guard;
+Turnstile *Turnstile::free_list;
+std::mutex Turnstile::list_guard;
 
 Turnstile *Turnstile::provide_turnstile() {
-  std::lock_guard<std::mutex> lk(Turnstile::queue_guard);
-  if (Turnstile::queue == nullptr) {
+  std::lock_guard<std::mutex> lk(Turnstile::list_guard);
+  if (Turnstile::free_list == nullptr) {
     return new Turnstile();
   }
-  Turnstile *ans = Turnstile::queue;
-  Turnstile::queue = Turnstile::queue->next;
+  Turnstile *ans = Turnstile::free_list;
+  Turnstile::free_list = Turnstile::free_list->next;
   ans->next = nullptr;
   return ans;
 }
 
-void Turnstile::add_to_queue(Turnstile *t) {
-  std::lock_guard<std::mutex> lk(queue_guard);
+void Turnstile::add_to_list(Turnstile *t) {
+  std::lock_guard<std::mutex> lk(list_guard);
   ASSERT(t->next == nullptr, "Turnstile has to be detached");
-  t->next = Turnstile::queue;
-  Turnstile::queue = t;
+  t->next = Turnstile::free_list;
+  Turnstile::free_list = t;
 }
 
 void Turnstile::add_waiting() { this->waiting_count++; }
@@ -35,7 +35,7 @@ bool Turnstile::unlock() {
   if (this->waiting_count == 0) {
     this->turnstile_mutex.unlock();
     LOG(cout << "adding " << *(this) << " from " << *this << "to free list");
-    Turnstile::add_to_queue(this);
+    Turnstile::add_to_list(this);
     return true;
   } else {
     LOG(cout << "notify next waiting from " << *this);
