@@ -24,6 +24,8 @@ class Turnstile {
 
  public:
   Turnstile() = default;
+  
+  ~Turnstile();
 
   void lock();
 

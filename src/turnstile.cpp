@@ -49,6 +49,12 @@ std::ostream &operator<<(std::ostream &os, const Turnstile &t) {
   return os;
 }
 
+Turnstile::~Turnstile() {
+  if (this->next != nullptr){
+    delete this-> next;
+  }
+}
+
 //********************************************************************
 //******************* Mutex implementation ***************************
 //********************************************************************
@@ -56,7 +62,7 @@ std::ostream &operator<<(std::ostream &os, const Turnstile &t) {
 std::array<std::mutex, Mutex::LOCK_COUNT> Mutex::turnstile_locks = {};
 
 size_t Mutex::map_ptr(void *ptr) {
-  int64_t ptr_val = reinterpret_cast<int64_t>(ptr);
+  auto ptr_val = reinterpret_cast<int64_t>(ptr);
   LOG(cout << "PTR:" << ptr_val);
   size_t h1 = std::hash<int64_t>{}(ptr_val);
   size_t ans = h1 % LOCK_COUNT;
