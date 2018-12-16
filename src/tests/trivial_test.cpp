@@ -43,7 +43,7 @@ void DummyTest() {
   }
 
   if (shared_cntr != kNumRounds * 2) {
-    throw std::logic_error("Cfounter==" + std::to_string(shared_cntr) +
+    throw std::logic_error("Counter==" + std::to_string(shared_cntr) +
                            " expected==" + std::to_string(kNumRounds * 2));
   }
 }
