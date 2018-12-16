@@ -42,7 +42,7 @@ class Mutex {
 
   Turnstile *current = nullptr;
 
-  static std::array<std::mutex, LOCK_COUNT> turnstile_locks;
+  static std::array<std::mutex, LOCK_COUNT> turnstile_guards;
 
   size_t map_ptr(void *ptr);
 

@@ -53,10 +53,10 @@ std::ostream &operator<<(std::ostream &os, const Turnstile &t) {
 //******************* Mutex implementation ***************************
 //********************************************************************
 
-std::array<std::mutex, Mutex::LOCK_COUNT> Mutex::turnstile_locks = {};
+std::array<std::mutex, Mutex::LOCK_COUNT> Mutex::turnstile_guards = {};
 
 size_t Mutex::map_ptr(void *ptr) {
-  int64_t ptr_val = reinterpret_cast<int64_t>(ptr);
+  auto ptr_val = reinterpret_cast<int64_t>(ptr);
   LOG(cout << "PTR:" << ptr_val);
   size_t h1 = std::hash<int64_t>{}(ptr_val);
   size_t ans = h1 % LOCK_COUNT;
@@ -67,7 +67,7 @@ size_t Mutex::map_ptr(void *ptr) {
 
 void Mutex::lock() {
   {
-    std::lock_guard<std::mutex> lk(Mutex::turnstile_locks[map_ptr(this)]);
+    std::lock_guard<std::mutex> lk(Mutex::turnstile_guards[map_ptr(this)]);
     if (current == nullptr) {
       this->current = Turnstile::provide_turnstile();
       LOG(cout << "new " << *current << "on " << *this);
@@ -80,7 +80,7 @@ void Mutex::lock() {
 }
 
 void Mutex::unlock() {
-  std::lock_guard<std::mutex> lk(Mutex::turnstile_locks[map_ptr(this)]);
+  std::lock_guard<std::mutex> lk(Mutex::turnstile_guards[map_ptr(this)]);
   ASSERT(this->current != nullptr, "Mutex turnstile cannot be null on unlock")
   if (this->current->unlock()) {
     this->current = nullptr;
